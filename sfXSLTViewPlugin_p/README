@@ -1,0 +1,146 @@
+= sfXSLTViewPlugin =
+
+This plugin is now being used in 3 client sites by [http://www.whiteoctober.co.uk] and is now in a more stable state.
+
+Please use this forum post to ask questions: http://www.symfony-project.org/forum/index.php/t/8506/
+
+It now offers support for components.
+
+If you have set components up they are avaliable by selecting /XML/components/componentname in XSLt.
+{{{
+<!-- Crumbtrail -->
+<xsl:value-of select="/XML/components/crumb" disable-output-escaping="yes"/>
+}}}
+The plugin also supports xsltCache which is a plugin developed by the NY Times [http://code.nytimes.com/projects/xslcache]
+
+You assign variables in the same way you do normally using symfony. It uses the names of these variables as the node names. These are case sensitive.
+
+It also senses if the object has a toArray method and creates a multi dimensional array based on this.
+
+If you pass an array which keys are numeric is persumes that these are multiples of the parent node.
+{{{
+	$this->sheeps = array("bah", "bahhh", "bahhh", "mooo");
+}}}
+{{{
+	<sheeps>
+		<sheep>bah</sheep>
+		<sheep>bahhh</sheep>
+		<sheep>bahhh</sheep>
+		<sheep>mooo</sheep>
+	</sheeps>
+}}}
+
+In the example files the "Success" template is looking for the layout.xsl file in the same directory. In all of our applications we put in in the "normal" layout directory.
+
+So to include a layout.xsl which is in your apps/application/template folder from your apps/application/modules/amodule/template/indexSuccess.xsl you need this at the top:
+{{{
+	<xsl:include href="../../../templates/layout.xsl"/>
+}}}	
+== Installation ==
+
+  {{{
+    symfony plugin-install http://plugins.symfony-project.com/sfXLTViewPlugin
+  }}}
+
+  * Create a module.yml either in your project config directory or in your apps config directory that contains the following:
+  {{{
+    all:
+      view_class: sfXSLT
+  }}}
+
+== Things it can do ==
+
+= Dump the XML =
+
+When you are in symfony "debug mode" (you have DEBUG set in your controller) if you add dumpXML=1 to any query string you will get a dump of the current XML returned to you.
+
+= sfPropelPager =
+
+If you set a sfPropelPager up like the backend generator makes for you, it will sense this for you and show you the result set and the paging information. Use the dumpXML=1 flag to see the resulting xml.
+{{{
+	$this->groups = new sfPropelPager('sfGuardGroup', 20);
+	$c = new Criteria();
+	$this->addSortCriteria($c);
+	$this->addFiltersCriteria($c);
+	$this->groups->setCriteria($c);
+	$this->groups->setPage($this->getRequestParameter('page', 1));
+	$this->groups->setPeerMethod('doSelect');
+	$this->groups->setPeerCountMethod("doCount");
+	$this->groups->init();
+}}}
+
+{{{
+<groups>
+	<group>
+		<id>1</id>
+		<name>admin</name>
+		<description>foo</description>
+	</group>
+</groups>
+}}}
+
+= Auto Join Foriegn Tables =
+
+Propel handly provides us with methods to "get" foriegn propel models. To recursivly get these into your xml is useful but if enabled by default could cause recursive nightmares.
+
+If you want this feature you can turn it on or off on a per model basis.
+
+Add the following code to any propel class, I am using a made up sfGuardGroupProfile class here..
+
+{{{
+
+/**
+ * Subclass for representing a row from the 'sf_guard_group_profile' table. 
+ *
+ * @package lib.model
+ */ 
+class sfGuardGroupProfile extends BasesfGuardGroupProfile
+{
+	public $XSLT_LOAD_FOREIGN = false;
+	
+	public function getLoadForeign(){
+		return $this->XSLT_LOAD_FOREIGN;
+	}
+	
+	public function setLoadForeign($v){
+		$this->XSLT_LOAD_FOREIGN=$v;
+	}
+}
+}}}
+
+So in your action you could have the following:
+
+{{{
+	$this->profile = sfGuardGroupProfilePeer::retrieveByPK(1);
+	$this->profile->setLoadForeign(true);
+}}}
+
+My example table has two foriegn tables that define the type and link back to the sfGuardGroup table. the resulting XML looks like this:
+
+{{{
+<profile>
+	<id>1</id>
+	<sf_guard_group_id>2</sf_guard_group_id>
+	<country_id>GB</country_id>
+	<type_id>1</type_id>
+	<pledge>Foo blah</pledge>
+	<uuid/>
+	<version>0</version>
+	<sfGuardGroup>
+		<id>2</id>
+		<name>Testing</name>
+		<description>test</description>
+	</sfGuardGroup>
+	<sfGuardGroupType>
+		<id>1</id>
+		<name>Open</name>
+		<created_at>2007-12-07 17:34:28</created_at>
+		<updated_at>2007-12-07 17:34:28</updated_at>
+		<uuid/>
+		<version>0</version>
+	</sfGuardGroupType>
+</profile>
+}}}
+== Issues ==
+
+You may have problems with default symfony templates. Currently only the 404 template exists. You can add your own if you wish.
