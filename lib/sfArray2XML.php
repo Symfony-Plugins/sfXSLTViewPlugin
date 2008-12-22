@@ -1,5 +1,7 @@
 <?php
-
+sfContext::getInstance()->getConfiguration()->loadHelpers('Helper');
+ 
+use_helper('Date');
 /**
 * associative array to xml transformation class
 * Based on Johnny Brochard's Class Array 2 XML
@@ -158,17 +160,23 @@ class sfArray2XML {
 			}else{
 				$newKey = $key;
 			}
-
+		
 			if ( strpos($newKey, ' ') !== False || $newKey=='')
 			{
 				// Bad key name, skip this entry
 				continue;
 			}
-
+			//If key is not alpha numeric
+			if(!preg_match('|^\w+$|', $newKey)){
+				// Bad key name, skip this entry
+				continue;
+			}
+			
 			$node = $this->doc->createElement($newKey);
+			
 			$append=false;
 			if (is_array($val)){
-				$this->addArray($arr[$key], $node, $key);
+				$this->addArray($arr[$key], $node, $newKey);
 				$append=true;
 			}
 			elseif(stristr($key,"XML") && $this->testforxml==true){
@@ -185,14 +193,49 @@ class sfArray2XML {
 				$append=true;
 			}
 			elseif(is_string($val)){
-				$nodeText = $this->doc->createCDATASection($val);
-				$node->appendChild($nodeText);
-				$append=true;
+				if(isValidDateTime($val)){
+					$ts = strtotime($val);
+					$timeinwords = distance_of_time_in_words($ts);
+					$nodeText = $this->doc->createCDATASection($val);
+					$node->setAttribute("timeinwords", $timeinwords);
+					$node->setAttribute("ts", $ts);
+					$node->setAttribute("d", date("d",$ts));
+					$node->setAttribute("D", date("D",$ts));
+					$node->setAttribute("l", date("l",$ts));
+					$node->setAttribute("S", date("S",$ts));
+					$node->setAttribute("m", date("m",$ts));
+					$node->setAttribute("M", date("M",$ts));
+					$node->setAttribute("F", date("F",$ts));
+					$node->setAttribute("n", date("n",$ts));
+					$node->setAttribute("t", date("t",$ts));
+					$node->setAttribute("y", date("y",$ts));
+					$node->setAttribute("Y", date("Y",$ts));
+					$node->setAttribute("g", date("g",$ts));
+					$node->setAttribute("G", date("G",$ts));
+					$node->setAttribute("h", date("h",$ts));
+					$node->setAttribute("H", date("H",$ts));
+					$node->setAttribute("i", date("i",$ts));
+					$node->setAttribute("s", date("s",$ts));
+					$node->appendChild($nodeText);
+					$append=true;
+				}else{
+					$nodeText = $this->doc->createCDATASection($val);
+					$node->appendChild($nodeText);
+					$append=true;
+				}
 			}
 			elseif(is_bool($val)){
 				$nodeText = $this->doc->createCDATASection(intval($val));
 				$node->appendChild($nodeText);
 				$append=true;
+			}
+			elseif(true===method_exists($val,"toDom")){
+				$fragment = $val->toDom($this->doc);
+				if ($fragment instanceof DOMDocumentFragment)
+				{
+					$node->appendChild($fragment);
+					$append=true;
+				}
 			}
 			elseif(true===method_exists($val,"toArray")){
 				$data = array();
@@ -231,6 +274,15 @@ class sfArray2XML {
 						}
 					}
 				}
+				if(true===method_exists($val,"loadThese")){
+					//Add what ever the values of each of the array to the data array
+					$these = $val->loadThese();
+					if(is_array($these)){
+						foreach($these as $loadkey => $loadmethod){
+							$data[$loadkey]=call_user_func(array($val,$loadmethod));
+						}
+					}
+				}
 				$this->addArray($data, $node, $key);
 				$append=true;
 			}
@@ -256,7 +308,7 @@ class sfArray2XML {
 				$data = array();
 				$data = $val->getResults();
 				if ($val->haveToPaginate()){
-					$data["pages"] = $val->getLinks();
+					$data["pagelinks"] = $val->getLinks();
 					$data["pages"]['ResultCount'] = $val->getNbResults();
 					$data["pages"]['FirstPage'] = $val->getFirstPage();
 					$data["pages"]['PreviousPage'] = $val->getPreviousPage();
@@ -264,7 +316,9 @@ class sfArray2XML {
 					$data["pages"]['LastPage'] = $val->getLastPage();
 					$data["pages"]['CurrentPage'] = $val->getPage();
 					$data["pages"]['CurrentMaxLink'] = $val->getCurrentMaxLink();
+					$data["pages"]['MaxPerPage'] = $val->getMaxPerPage();
 				}
+				$data["total"] = $val->getNbResults();
 				if($data){
 					$this->addArray($data, $node, $key);
 					$append=true;
@@ -299,4 +353,16 @@ class sfArray2XML {
 	}
 }
 
-?>
+function isValidDateTime($dateTime)
+{
+	$matches = array();
+    if (preg_match("/^(\d{4})-(\d{2})-(\d{2}) ([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/", $dateTime, $matches)) {
+    	if(isset($matches[1]) && isset($matches[2]) && isset($matches[3])){
+        	if (checkdate($matches[2], $matches[3], $matches[1])) {
+           		return true;
+        	}
+    	}
+    }
+
+    return false;
+}

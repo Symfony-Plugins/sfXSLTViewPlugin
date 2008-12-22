@@ -1,8 +1,8 @@
 <?php
 
-
-$e = error_reporting(0);
-error_reporting($e);
+//Not sure why i have this set..commenting out for now
+//$e = error_reporting(0);
+//error_reporting($e);
 
 /**
  * sfXSLTView
@@ -46,7 +46,10 @@ class sfXSLTView extends sfPHPView {
 		}
 		$this->buildcomp = $buildcomponents;
 		$this->context = $context;
-		$this->attributeHolder = new sfParameterHolder();
+	
+	    $this->dispatcher = $context->getEventDispatcher();
+		
+		$this->attributeHolder = $this->initializeAttributeHolder();
 		$this->parameterHolder = new sfParameterHolder();
 		$this->parameterHolder->add(sfConfig::get('mod_'.strtolower($moduleName).'_view_param', array()));
 		$this->decoratorDirectory = sfConfig::get('sf_app_template_dir');
@@ -201,11 +204,11 @@ class sfXSLTView extends sfPHPView {
 	{
 
 		$timer = sfTimerManager::getTimer('renderFile');
+		
 		if (sfConfig::get('sf_logging_enabled'))
-		{
-			$this->getContext()->getLogger()->info('{sfView} render "'.$_sfFile.'"');
-		}
-		$_escaping = $this->getEscaping();
+    	{
+      		$this->dispatcher->notify(new sfEvent($this, 'application.log', array(sprintf('Render "%s"', $_sfFile))));
+    	}
 
 		$this->loadCoreAndStandardHelpers();
 		$this->attributeHolder->set("file",$_sfFile);
@@ -215,21 +218,13 @@ class sfXSLTView extends sfPHPView {
 		$this->attributeHolder->set("Date",date('F jS Y'));
 		$this->attributeHolder->set("UploadPath", sfContext::getInstance()->getRequest()->getRelativeUrlRoot().'/'.sfConfig::get('sf_upload_dir_name'));
 
-
-
-		// Add any request errors that have been generated
-		if (sfContext::getInstance()->getRequest()->hasErrors())
-		{
-			$this->attributeHolder->set('RequestErrors',sfContext::getInstance()->getRequest()->getErrors());
-		}
-
 		$array2xml = new sfArray2XML();
 
 		$array2xml->setArray($this->attributeHolder->getAll());
 
 		$xmlstr=$array2xml->saveArray("","XML",true);
 		$GLOBALS['XMLSTR'] = $xmlstr;
-		if($this->context->getRequest()->getParameter("dumpXML") && SF_DEBUG==true && $this->buildcomp==true){
+		if($this->context->getRequest()->hasParameter("dumpXML") && $this->buildcomp==true){
 			header('Content-type: text/xml');
 			echo $xmlstr;
 			flush();
@@ -255,6 +250,3 @@ class sfXSLTView extends sfPHPView {
 	}
 
 }
-
-
-?>
