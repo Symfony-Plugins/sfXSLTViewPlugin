@@ -237,7 +237,28 @@ class sfArray2XML {
 					$append=true;
 				}
 			}
+			elseif(true===method_exists($val,"toArray") && $val instanceof Doctrine_Collection){
+				
+				$data = array();
+				$loadForeign = false;
+				if(true===method_exists($val,"getLoadForeign")){
+					$loadForeign = $val->getLoadForeign();
+				}
+				$data = $val->toArray($loadForeign);
+				if(true===method_exists($val,"loadThese")){
+					//Add what ever the values of each of the array to the data array
+					$these = $val->loadThese();
+					if(is_array($these)){
+						foreach($these as $loadkey => $loadmethod){
+							$data[$loadkey]=call_user_func(array($val,$loadmethod));
+						}
+					}
+				}
+				$this->addArray($data, $node, $key);
+				$append=true;
+			}
 			elseif(true===method_exists($val,"toArray")){
+				
 				$data = array();
 				$data = $val->toArray(BasePeer::TYPE_FIELDNAME);
 				/**
@@ -323,8 +344,14 @@ class sfArray2XML {
 					$this->addArray($data, $node, $key);
 					$append=true;
 				}
+			}elseif($val instanceof sfForm){
+				
+				$nodeText = $this->doc->createCDATASection((string) $val);
+				$node->appendChild($nodeText);
+				$append=true;
 			}
 			else {
+				//var_dump($val);
 			}
 			if($append)
 			$n->appendChild($node);
