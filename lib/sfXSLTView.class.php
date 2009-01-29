@@ -193,7 +193,7 @@ class sfXSLTView extends sfPHPView {
 	}
 
 	/**
-     * sfXSLTVieww::renderFile()
+     * sfXSLTView::renderFile()
      * this method is used instead of sfPHPView::renderFile()
      *
      * @param mixed $file

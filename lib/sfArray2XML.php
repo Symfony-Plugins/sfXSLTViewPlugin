@@ -83,7 +83,7 @@ class sfArray2XML {
      * @return bool
      */
 
-	public function saveArray($XMLFile, $rootName="",$testforxml=false,$dropdecleration=false, $encoding="utf-8"){
+	public function saveArray($XMLFile, $rootName="",$testforxml=false,$dropdeclaration=false, $encoding="utf-8"){
 		global $debug;
 		$this->doc = new domdocument();
 		$arr = array();
@@ -126,7 +126,7 @@ class sfArray2XML {
 		$root->appendChild($n);
 		}
 		*/
-		if($dropdecleration){
+		if($dropdeclaration){
 			$xml=explode("\n",$this->doc->saveXML());
 			array_shift($xml);
 			$xml=implode("\n",$xml);
@@ -176,8 +176,15 @@ class sfArray2XML {
 			
 			$append=false;
 			if (is_array($val)){
+			  if (array_keys($val))
+			  {
+			    $this->addArray($arr[$key], $node, $key);
+				$append=true;
+			    
+			  } else {
 				$this->addArray($arr[$key], $node, $newKey);
 				$append=true;
+			  }
 			}
 			elseif(stristr($key,"XML") && $this->testforxml==true){
 				if(strlen($val)>0){
@@ -229,6 +236,10 @@ class sfArray2XML {
 				$node->appendChild($nodeText);
 				$append=true;
 			}
+			//elseif(true===method_exists($val,"toInlineArray")){
+			//    $data = $val->toInlineArray();
+			//    foreach ()
+			//}
 			elseif(true===method_exists($val,"toDom")){
 				$fragment = $val->toDom($this->doc);
 				if ($fragment instanceof DOMDocumentFragment)
@@ -238,7 +249,7 @@ class sfArray2XML {
 				}
 			}
 			elseif(true===method_exists($val,"toArray") && $val instanceof Doctrine_Collection){
-				
+				//echo "DEBUG_A";
 				$data = array();
 				$loadForeign = false;
 				if(true===method_exists($val,"getLoadForeign")){
@@ -258,11 +269,17 @@ class sfArray2XML {
 				$append=true;
 			}
 			elseif(true===method_exists($val,"toArray")){
-				
+				//echo "DEBUG_B";
 				$data = array();
-				$data = $val->toArray(BasePeer::TYPE_FIELDNAME);
+				// Doctrine/Propel compatibility
+				if (class_exists('BasePeer'))
+				{
+    			  $data = $val->toArray(BasePeer::TYPE_FIELDNAME);
+				} else {
+				  $data = $val->toArray();
+				}
 				/**
-				 * If the user has decided to set up loading of foriegn tables automatically
+				 * If the user has decided to set up loading of foreign tables automatically
 				 */
 				if(true===method_exists($val,"getLoadForeign")){
 					/**
