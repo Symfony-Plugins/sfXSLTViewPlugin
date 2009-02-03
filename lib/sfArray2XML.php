@@ -811,19 +811,21 @@ class sfArray2XML {
      * @param Doctrine_Pager $val
      * @return boolean
      */
-    public static function appendDoctrinePager($xmldocument, $node, $val)
+    public static function appendDoctrinePager($xmldocument, $node, $val, $key=null)
     {
+      $data = array();
+      
       // If the pager has not been executed, it will throw Doctrine_Pager_Exception
       if (! $val->getExecuted())
       {
-        $val->execute();
+        $data['results'] = $val->execute();
       }
       
-      $data = array();
-      $data = $val->getResults();
+      //$data = $val->getResults();
       if ($val->haveToPaginate())
       {
         //$data["pagelinks"] = $val->getLinks();
+        $data["pages"] = array();
         $data["pages"]['ResultCount'] = $val->getNumResults();
         $data["pages"]['FirstPage'] = $val->getFirstPage();
         $data["pages"]['PreviousPage'] = $val->getPreviousPage();
@@ -836,6 +838,7 @@ class sfArray2XML {
       $data["total"] = $val->getNumResults();
       if($data) // TODO: Not sure this test makes sense? $data["total"] should be set, forcing 'true'
       {
+        //wtUtil::dump($data);
         //$this->addArray($data, $node, $key);
         self::appendArray($xmldocument, $node, $data, $key);
         //$append=true;
