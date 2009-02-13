@@ -89,7 +89,6 @@ class sfArray2XML
    * @param string $XMLFile
    * @return bool
    */
-  
   public function saveArray($XMLFile, $rootName = "", $testforxml = false, $dropdeclaration = false, $encoding = "utf-8")
   {
     global $debug;
@@ -312,36 +311,26 @@ class sfArray2XML
    * @param array $arr
    * @param string $name
    */
-  public static function appendInlineArray($xmlDocument, &$parentNode, $arr, $name = "")
+  public static function appendInlineArray($xmlDocument, $parentNode, $arr, $name = "", $grandparentNode = null)
   {
+    
     if (is_array ( $arr ))
+      
       foreach ( $arr as $key => $val )
       {
         $isInline = false;
+        
         // Set up 'sheeps','sheeps' naming pattern
         if (is_int ( $key ))
         {
           if (strlen ( $name ) > 1)
           {
             $newKey = $name;
-            if (! isset ( $node ))
-            {
-              $node = $parentNode;
-              $mustAppend = false;
-            }
-            else
-            {
-              $node = $xmlDocument->createElement ( $newKey );
-              $mustAppend = true;
-            }
-            self::selectNodeType ( $xmlDocument, $node, $arr [$key], $key, $newKey );
-            if ($mustAppend)
-            {
-              //print_r($parentNode);
-            //$parentNode->parentNode->appendChild($node);
-            }
-            continue;
+            $node = $xmlDocument->createElement ( $newKey );
+            $a = true;
             $isInline = true;
+            self::selectNodeType ( $xmlDocument, $node, $arr [$key], $key, $newKey, $parentNode );
+            //continue;
           }
           else
           {
@@ -358,90 +347,72 @@ class sfArray2XML
           continue;
         }
         
-        if ($isInline)
-        {
-          $node = $parentNode;
-        }
-        else
+        if (!$isInline)
         {
           $node = $xmlDocument->createElement ( $newKey );
+          self::selectNodeType ( $xmlDocument, $node, $arr [$key], $key, $newKey, $parentNode );
         }
-        
-        if (self::selectNodeType ( $xmlDocument, $node, $arr [$key], $key, $newKey ))
-        {
-          // If $isInline==true, then $parentNode==$node too!)
-          if (! $isInline)
-          {
-            $parentNode->appendChild ( $node );
-          }
-        
+        if($isInline){
+         $grandparentNode->appendChild ( $node ); 
+        }elseif($node->hasChildNodes()){
+          $parentNode->appendChild ( $node );
         }
       }
   }
 
-  public static function selectNodeType($xmlDocument, $node, $val, $key, $newKey)
+  public static function selectNodeType($xmlDocument, $node, $val, $key, $newKey, $parentNode)
   {
     $append = false;
     if (is_array ( $val ))
     {
       if (array_keys ( $val ))
       { //echo " A[$key]";
-        self::appendInlineArray ( $xmlDocument, $node, $val, $key );
+        self::appendInlineArray ( $xmlDocument, $node, $val, $key, $parentNode );
         $append = true;
       
       }
       else
       {
         //echo " B[$newkey]";
-        self::appendInlineArray ( $xmlDocument, $node, $val, $newKey );
+        self::appendInlineArray ( $xmlDocument, $node, $val, $newKey, $parentNode );
         $append = true;
       }
     }
     elseif (stristr ( $key, "XML" ) && $this->testforxml == true)
     {
       // $key contains 'XML' so add the $val as literal XML
-      self::appendXMLString ( $xmlDocument, $node, $val );
+      $append = self::appendXMLString ( $xmlDocument, $node, $val );
     }
     elseif (is_numeric ( $val ))
     {
-      self::appendNumeric ( $xmlDocument, $node, $val );
+      $append = self::appendNumeric ( $xmlDocument, $node, $val );
     }
     elseif (is_string ( $val ))
     {
       if (isValidDateTime ( $val ))
       {
-        self::appendDateTime ( $xmlDocument, $node, $val );
-        $append = true;
+        $append = self::appendDateTime ( $xmlDocument, $node, $val );
       }
       else
       {
-        self::appendCData ( $xmlDocument, $node, $val );
-        $append = true;
+        $append = self::appendCData ( $xmlDocument, $node, $val );
       }
     }
     elseif (is_bool ( $val ))
     {
-      self::appendCData ( $xmlDocument, $node, intval ( $val ) );
-      $append = true;
+      $append = self::appendCData ( $xmlDocument, $node, intval ( $val ) );
     }
     elseif (true === method_exists ( $val, "toDom" ))
     {
-      if (self::appendDocumentFragment ( $xmlDocument, $node, $val->toDom ( $xmlDocument ) ))
-      {
-        $append = true;
-      }
+      $append = self::appendDocumentFragment ( $xmlDocument, $node, $val->toDom ( $xmlDocument ) );
     }
     elseif (true === method_exists ( $val, "toXml" ))
     {
-      if (self::appendDocumentFragment ( $xmlDocument, $node, $val->toXml ( $xmlDocument ) ))
-      {
-        $append = true;
-      }
+      $append = self::appendDocumentFragment ( $xmlDocument, $node, $val->toXml ( $xmlDocument ) );
     }
     elseif (true === method_exists ( $val, "toArray" ))
     {
-      self::appendObjectArray ( $xmlDocument, $node, $val, $key );
-      $append = true;
+      $append = self::appendObjectArray ( $xmlDocument, $node, $val, $key );
     }
     elseif ($val instanceof sfParameterHolder)
     {
@@ -451,29 +422,20 @@ class sfArray2XML
     }
     elseif ($val instanceof myUser)
     {
-      self::appendUser ( $xmlDocument, $node, $val, $key );
-      $append = true;
+      $append = self::appendUser ( $xmlDocument, $node, $val, $key );
     }
     elseif ($val instanceof sfPropelPager)
     {
-      if (self::appendPropelPager ( $xmlDocument, $node, $val ))
-      {
-        $append = true;
-      }
+      $append = self::appendPropelPager ( $xmlDocument, $node, $val );
     }
     elseif ($val instanceof Doctrine_Pager)
     {
-      if (self::appendDoctrinePager ( $xmlDocument, $node, $val ))
-      {
-        $append = true;
-      }
-    
+      $append = self::appendDoctrinePager ( $xmlDocument, $node, $val );
     }
     elseif ($val instanceof sfForm)
     {
       // Convert the form to the string representation
-      self::appendCData ( $xmlDocument, $node, ( string ) $val );
-      $append = true;
+      $append = self::appendCData ( $xmlDocument, $node, ( string ) $val );
     }
     
     return $append;
