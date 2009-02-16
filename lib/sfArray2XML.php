@@ -51,6 +51,7 @@ class sfArray2XML
   private $doc;
   
   private $testforxml;
+  public static $key_test = array ();
 
   /**
    * Constructor
@@ -311,72 +312,94 @@ class sfArray2XML
    * @param array $arr
    * @param string $name
    */
-  public static function appendInlineArray($xmlDocument, $parentNode, $arr, $name = "", $grandparentNode = null)
+  public static function appendInlineArray($xmlDocument, $parentNode, $arr)
   {
-    
-    if (is_array ( $arr ))
-      
-      foreach ( $arr as $key => $val )
+    $append = true;
+    $appendLevel1 = true;
+    foreach ( $arr as $key => $data )
+    {
+      if (is_array ( $data ))
       {
-        $isInline = false;
-        
-        // Set up 'sheeps','sheeps' naming pattern
-        if (is_int ( $key ))
+        if (isset ( self::$key_test [$key] ))
         {
-          if (strlen ( $name ) > 1)
-          {
-            $newKey = $name;
-            $node = $xmlDocument->createElement ( $newKey );
-            $a = true;
-            $isInline = true;
-            self::selectNodeType ( $xmlDocument, $node, $arr [$key], $key, $newKey, $parentNode );
-            //continue;
-          }
-          else
-          {
-            $newKey = "item";
-          }
+          $args[0]=$xmlDocument;
+          $args[1]=$parentNode;
+          $args[2]=$data;
+          $append = call_user_func ( self::$key_test [$key], $args );
         }
         else
         {
-          $newKey = $key;
-        }
-        
-        if (! self::isElementNameValid ( $newKey ))
-        {
-          continue;
-        }
-        
-        if (!$isInline)
-        {
-          $node = $xmlDocument->createElement ( $newKey );
-          self::selectNodeType ( $xmlDocument, $node, $arr [$key], $key, $newKey, $parentNode );
-        }
-        if($isInline){
-         $grandparentNode->appendChild ( $node ); 
-        }elseif($node->hasChildNodes()){
-          $parentNode->appendChild ( $node );
+          $level1Node = $xmlDocument->createElement ( $key );
+          foreach ( $data as $subkey => $subdata )
+          {
+            if (is_int ( $subkey ))
+            {
+              $append = self::appendNode ( $xmlDocument, $parentNode, $subdata, $key, $key );
+              $appendLevel1 = false;
+            }
+            elseif (is_array ( $subdata ))
+            {
+              foreach ( $subdata as $level3key => $level3data )
+              {
+                if (is_int ( $level3key ))
+                {
+                  $append = self::appendNode ( $xmlDocument, $level1Node, $level3data, $subkey, $subkey );
+                }
+                elseif (self::isElementNameValid ( $level3key ))
+                {
+                  $append = self::appendNode ( $xmlDocument, $level1Node, $level3data, $subkey, $level3key );
+                }
+              }
+            }
+            elseif (self::isElementNameValid ( $subkey ))
+            {
+              $append = self::appendNode ( $xmlDocument, $parentNode, $subdata, $subkey, $subkey );
+              $appendLevel1 = false;
+            }
+            if ($appendLevel1)
+            {
+              $parentNode->appendChild ( $level1Node );
+            }
+          }
         }
       }
+      elseif(is_int($key)){
+        $newKey = substr ( $parentNode->tagName, 0, strlen ( $parentNode->tagName ) - 1 );
+        $append = self::appendNode ( $xmlDocument, $parentNode, $data,  $newKey , $key );
+      }
+      elseif (self::isElementNameValid ( $key ))
+      {
+        $append = self::appendNode ( $xmlDocument, $parentNode, $data, $key, $key );
+      }
+    }
+    
+    return $append;
   }
 
-  public static function selectNodeType($xmlDocument, $node, $val, $key, $newKey, $parentNode)
+  public static function appendNode($xmlDocument, $parentNode, $data, $nodename, $nodekey)
   {
-    $append = false;
+    
+    if (isset ( self::$key_test [$nodename] ))
+    {
+      $args = func_get_args ();
+      return call_user_func ( self::$key_test [$nodename], $args );
+    }
+    
+    $node = $xmlDocument->createElement ( $nodename );
+    $appendNode = self::selectNodeType ( $xmlDocument, $node, $data, $nodekey );
+    if ($appendNode)
+    {
+      $parentNode->appendChild ( $node );
+    }
+    return true;
+  }
+
+  public static function selectNodeType($xmlDocument, $node, $val, $key)
+  {
+    $append = true;
     if (is_array ( $val ))
     {
-      if (array_keys ( $val ))
-      { //echo " A[$key]";
-        self::appendInlineArray ( $xmlDocument, $node, $val, $key, $parentNode );
-        $append = true;
-      
-      }
-      else
-      {
-        //echo " B[$newkey]";
-        self::appendInlineArray ( $xmlDocument, $node, $val, $newKey, $parentNode );
-        $append = true;
-      }
+      $append = self::appendInlineArray ( $xmlDocument, $node, $val );
     }
     elseif (stristr ( $key, "XML" ) && $this->testforxml == true)
     {
@@ -738,26 +761,7 @@ class sfArray2XML
     $frag->appendChild ( $nodeText );
     
     self::appendInlineArray ( $domdoc, $frag, $arrValues, $name );
-    /*
-	  foreach ($arrValues as $key=>$val)
-	  {
-	    if (is_array($val) && isset($val[0]) && is_integer($val[0]))
-	    {
-	      // Indexed array!
-	      $node = $domdoc->createElement($key);
-	      $frag->appendChild($node);
-	    } else {
-	      self::appendInlineArray($domdoc, $frag, $val);
-	    }
-	  }
-      */
     
-    /*
-	  $node = $domdoc->createElement('Testing');
-      $nodeText = $domdoc->createCDATASection('foobar');
-      $node->appendChild($nodeText);
-      $frag->appendChild($node);
-	  */
     return $frag;
   }
 }
