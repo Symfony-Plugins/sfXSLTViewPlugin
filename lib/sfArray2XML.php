@@ -757,11 +757,11 @@ class sfArray2XML
   {
     $frag = $domdoc->createDocumentFragment ();
     
-    $nodeText = $domdoc->createCDATASection ( print_r ( $arrValues, true ) );
-    $frag->appendChild ( $nodeText );
-    
     self::appendInlineArray ( $domdoc, $frag, $arrValues, $name );
-    
+    $raw = $domdoc->createElement("raw");
+    $nodeText = $domdoc->createCDATASection ( print_r ( $arrValues, true ) );
+    $raw->appendChild ( $nodeText );
+    $frag->appendChild ( $raw );
     return $frag;
   }
 }
