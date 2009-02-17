@@ -182,6 +182,7 @@ class sfXSLTView extends sfPHPView {
 		{
 			// render
 			$view = new sfXSLTView($context,$moduleName,$actionName,  '',false);
+			$view->attributeHolder = $componentInstance->getVarHolder();
 			$retval = $view->render($componentInstance->getVarHolder()->getAll());
 			if ($cacheManager = $context->getViewCacheManager())
 			{
