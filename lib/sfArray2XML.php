@@ -209,15 +209,15 @@ class sfArray2XML
           continue;
         }
         
-        $append = false;
         if (isset ( self::$key_test [$key] ))
         {
           $args = func_get_args ();
           $args[4] = $key;
-          $append = call_user_func ( self::$key_test [$key], $args );
+          call_user_func ( self::$key_test [$key], $args );
         }
         else
         {
+          $append = false;
           $node = $xmlDocument->createElement ( $newKey );
           if (is_array ( $val ))
           {
