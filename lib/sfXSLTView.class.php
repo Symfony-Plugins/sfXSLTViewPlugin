@@ -27,6 +27,12 @@ class sfXSLTView extends sfPHPView {
      * @param mixed $viewName
      * @return
      **/
+	
+  public function __construct($context, $moduleName, $actionName, $viewName, $buildcomponents=true)
+  {
+    $this->initialize($context, $moduleName, $actionName, $viewName, $buildcomponents);
+  }
+  
 	public function initialize($context, $moduleName, $actionName, $viewName,$buildcomponents=true)
 	{
 		if (sfConfig::get('sf_logging_enabled'))
@@ -96,8 +102,10 @@ class sfXSLTView extends sfPHPView {
 
 		return $retval;
 	}
+	
 	function get_component($moduleName, $componentName, $vars = array())
 	{
+
 		$context = $this->context;
 		$actionName = '_'.$componentName;
 
@@ -124,20 +132,16 @@ class sfXSLTView extends sfPHPView {
 		}
 
 		// create an instance of the action
+		
 		$componentInstance = $controller->getComponent($moduleName, $componentName);
 
 		// initialize the action
-		if (!$componentInstance->initialize($context))
-		{
-			// component failed to initialize
-			$error = 'Component initialization failed for module "%s", component "%s"';
-			$error = sprintf($error, $moduleName, $componentName);
-
-			throw new sfInitializationException($error);
-		}
+		$componentInstance->initialize($context, $moduleName, $actionName);
 
 		// load component's module config file
-		require(sfConfigCache::getInstance()->checkConfig(sfConfig::get('sf_app_module_dir_name').'/'.$moduleName.'/'.sfConfig::get('sf_app_module_config_dir_name').'/module.yml'));
+		if(file_exists(sfConfig::get('sf_app_module_dir_name').'/'.$moduleName.'/config/module.yml')){
+		  require(sfContext::getInstance ()->getConfigCache()->checkConfig(sfConfig::get('sf_app_module_dir_name').'/'.$moduleName.'/config/module.yml'));
+		}
 
 		$componentInstance->getVarHolder()->add($vars);
 
@@ -177,12 +181,8 @@ class sfXSLTView extends sfPHPView {
 		if ($retval != sfView::NONE)
 		{
 			// render
-
-			$view = new sfXSLTView();
-			$view->initialize($context, $moduleName, $actionName, '',false);
-
+			$view = new sfXSLTView($context,$moduleName,$actionName,  '',false);
 			$retval = $view->render($componentInstance->getVarHolder()->getAll());
-
 			if ($cacheManager = $context->getViewCacheManager())
 			{
 				$retval = $this->_set_cache($cacheManager, $uri, $retval);
