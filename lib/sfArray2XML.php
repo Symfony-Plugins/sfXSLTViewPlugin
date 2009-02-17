@@ -208,10 +208,13 @@ class sfArray2XML
         {
           continue;
         }
-        
+        /**
+         * Ok we want to do some magic here
+         */
         if (isset ( self::$key_test [$key] ))
         {
           $args = func_get_args ();
+          $args[2] = $val;
           $args[4] = $key;
           call_user_func ( self::$key_test [$key], $args );
         }
