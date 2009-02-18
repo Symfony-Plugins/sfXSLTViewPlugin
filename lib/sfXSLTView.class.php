@@ -216,7 +216,7 @@ class sfXSLTView extends sfPHPView {
 		$this->attributeHolder->set("file",$_sfFile);
 		$this->attributeHolder->set("MetaData",sfContext::getInstance()->getResponse()->getMetas());
 		$this->attributeHolder->set("RootPath",sfContext::getInstance()->getRequest()->getRelativeUrlRoot() .'/');
-		$this->attributeHolder->set("RootDomain",sfContext::getInstance()->getRequest()->getUriPrefix() .'/');
+		$this->attributeHolder->set("RootDomain",sfContext::getInstance()->getRequest()->getUriPrefix());
 		$this->attributeHolder->set("Year",date('Y'));
 		$this->attributeHolder->set("Date",date('F jS Y'));
 		$this->attributeHolder->set("UploadPath", sfContext::getInstance()->getRequest()->getRelativeUrlRoot().'/'.sfConfig::get('sf_upload_dir_name'));
