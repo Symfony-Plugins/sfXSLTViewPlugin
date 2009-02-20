@@ -15,7 +15,7 @@ class sfXSLTViewConfigHandler extends sfYamlConfigHandler {
     if(isset($config["keytests"]) && is_array($config["keytests"])){
       foreach($config["keytests"] as $key => $test)
       {
-        $data .= sprintf("sfArray2XML::\$key_test[\"%s\"]=\"%s\";\n",$key,$test);
+        $data .= sprintf("PluginArray2XML::\$key_test[\"%s\"]=\"%s\";\n",$key,$test);
       }
     }
     

@@ -1,6 +1,6 @@
 <?php
 sfContext::getInstance ()->getConfiguration ()->loadHelpers ( 'Helper' );
-
+include(sfContext::getInstance()->getConfigCache()->checkConfig('config/xslt.yml'));
 use_helper ( 'Date' );
 
 /**
@@ -221,83 +221,95 @@ class PluginArray2XML
         {
           continue;
         }
-        
-        $node = $xmlDocument->createElement ( $newKey );
-        
-        $append = false;
-        if (is_array ( $val ))
+        /**
+         * Ok we want to do some magic here
+         */
+        if (isset ( self::$key_test [$key] ))
         {
-          if (array_keys ( $val ))
-          {
-            self::appendArray ( $xmlDocument, $node, $arr [$key], $key );
-            $append = true;
-          
-          }
-          else
-          {
-            self::appendArray ( $xmlDocument, $node, $arr [$key], $newKey );
-            $append = true;
-          }
-        }
-        elseif (stristr ( $key, "XML" ) && $this->testforxml == true)
-        {
-          // $key contains 'XML' so add the $val as literal XML
-          $append = self::appendXMLString ( $xmlDocument, $node, $val );
-        
-        }
-        elseif (is_numeric ( $val ))
-        {
-          $append = self::appendNumeric ( $xmlDocument, $node, $val );
-        
-        }
-        elseif (is_string ( $val ))
-        {
-          if (isValidDateTime ( $val ))
-          {
-            $append = self::appendDateTime ( $xmlDocument, $node, $val );
-          }
-          else
-          {
-            $append = self::appendCData ( $xmlDocument, $node, $val );
-          }
-        }
-        elseif (is_bool ( $val ))
-        {
-          $append = self::appendCData ( $xmlDocument, $node, intval ( $val ) );
-        }
-        
-        elseif (true === method_exists ( $val, "toDom" ))
-        {
-          $append = self::appendDocumentFragment ( $xmlDocument, $node, $val->toDom ( $xmlDocument ) );
-        }
-        elseif (true === method_exists ( $val, "toXml" ))
-        {
-          $append = self::appendDocumentFragment ( $xmlDocument, $node, $val->toXml ( $xmlDocument ) );
-        }
-        elseif (true === method_exists ( $val, "toArray" ))
-        {
-          $append = self::appendObjectArray ( $xmlDocument, $node, $val, $key );
-        }
-        elseif ($val instanceof sfPropelPager)
-        {
-          $append = self::appendPropelPager ( $xmlDocument, $node, $val );
-        }
-        elseif ($val instanceof Doctrine_Pager)
-        {
-          $append = self::appendDoctrinePager ( $xmlDocument, $node, $val );
-        }
-        elseif ($val instanceof sfForm)
-        {
-          // Convert the form to the string representation
-          $append = self::appendCData ( $xmlDocument, $node, ( string ) $val );
+          $args = func_get_args ();
+          $args [2] = $val;
+          $args [4] = $key;
+          call_user_func ( self::$key_test [$key], $args );
         }
         else
         {
-          //var_dump($val);
-        }
-        if ($append)
-        {
-          $parentNode->appendChild ( $node );
+          $node = $xmlDocument->createElement ( $newKey );
+          
+          $append = false;
+          if (is_array ( $val ))
+          {
+            if (array_keys ( $val ))
+            {
+              self::appendArray ( $xmlDocument, $node, $arr [$key], $key );
+              $append = true;
+            
+            }
+            else
+            {
+              self::appendArray ( $xmlDocument, $node, $arr [$key], $newKey );
+              $append = true;
+            }
+          }
+          elseif (stristr ( $key, "XML" ) && $this->testforxml == true)
+          {
+            // $key contains 'XML' so add the $val as literal XML
+            $append = self::appendXMLString ( $xmlDocument, $node, $val );
+          
+          }
+          elseif (is_numeric ( $val ))
+          {
+            $append = self::appendNumeric ( $xmlDocument, $node, $val );
+          
+          }
+          elseif (is_string ( $val ))
+          {
+            if (isValidDateTime ( $val ))
+            {
+              $append = self::appendDateTime ( $xmlDocument, $node, $val );
+            }
+            else
+            {
+              $append = self::appendCData ( $xmlDocument, $node, $val );
+            }
+          }
+          elseif (is_bool ( $val ))
+          {
+            $append = self::appendCData ( $xmlDocument, $node, intval ( $val ) );
+          }
+          
+          elseif (true === method_exists ( $val, "toDom" ))
+          {
+            $append = self::appendDocumentFragment ( $xmlDocument, $node, $val->toDom ( $xmlDocument ) );
+          }
+          elseif (true === method_exists ( $val, "toXml" ))
+          {
+            $append = self::appendDocumentFragment ( $xmlDocument, $node, $val->toXml ( $xmlDocument ) );
+          }
+          elseif (true === method_exists ( $val, "toArray" ))
+          {
+            $append = self::appendObjectArray ( $xmlDocument, $node, $val, $key );
+          }
+          elseif ($val instanceof sfPropelPager)
+          {
+            $append = self::appendPropelPager ( $xmlDocument, $node, $val );
+          }
+          elseif ($val instanceof Doctrine_Pager)
+          {
+            $append = self::appendDoctrinePager ( $xmlDocument, $node, $val );
+          }
+          elseif ($val instanceof sfForm)
+          {
+            // Convert the form to the string representation
+            $append = self::appendCData ( $xmlDocument, $node, ( string ) $val );
+          }
+          else
+          {
+            //var_dump($val);
+          }
+          if ($append)
+          {
+            $parentNode->appendChild ( $node );
+          }
         }
       }
   }
@@ -322,9 +334,9 @@ class PluginArray2XML
       {
         if (isset ( self::$key_test [$key] ))
         {
-          $args[0]=$xmlDocument;
-          $args[1]=$parentNode;
-          $args[2]=$data;
+          $args [0] = $xmlDocument;
+          $args [1] = $parentNode;
+          $args [2] = $data;
           $append = call_user_func ( self::$key_test [$key], $args );
         }
         else
@@ -363,9 +375,10 @@ class PluginArray2XML
           }
         }
       }
-      elseif(is_int($key)){
+      elseif (is_int ( $key ))
+      {
         $newKey = substr ( $parentNode->tagName, 0, strlen ( $parentNode->tagName ) - 1 );
-        $append = self::appendNode ( $xmlDocument, $parentNode, $data,  $newKey , $key );
+        $append = self::appendNode ( $xmlDocument, $parentNode, $data, $newKey, $key );
       }
       elseif (self::isElementNameValid ( $key ))
       {
@@ -758,7 +771,7 @@ class PluginArray2XML
     $frag = $domdoc->createDocumentFragment ();
     
     self::appendInlineArray ( $domdoc, $frag, $arrValues, $name );
-    $raw = $domdoc->createElement("raw");
+    $raw = $domdoc->createElement ( "raw" );
     $nodeText = $domdoc->createCDATASection ( print_r ( $arrValues, true ) );
     $raw->appendChild ( $nodeText );
     $frag->appendChild ( $raw );
