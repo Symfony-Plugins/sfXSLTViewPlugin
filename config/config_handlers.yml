@@ -1,2 +1,3 @@
 config/xslt.yml:
   class: sfXSLTViewConfigHandler
+  file: %SF_LIB_DIR%/../plugins/sfXSLTViewPlugin/lib/sfXSLTViewConfigHandler.class.php
