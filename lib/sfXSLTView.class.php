@@ -204,7 +204,7 @@ class sfXSLTView extends sfPHPView {
 	protected function renderFile($_sfFile)
 	{
 
-		$timer = sfTimerManager::getTimer('renderFile');
+		$timer = sfTimerManager::getTimer('renderFile '.basename($_sfFile));
 		
 		if (sfConfig::get('sf_logging_enabled'))
     	{
