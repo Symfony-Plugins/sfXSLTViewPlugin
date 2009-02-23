@@ -326,6 +326,8 @@ class PluginArray2XML
    */
   public static function appendInlineArray($xmlDocument, $parentNode, $arr)
   {
+    if (!is_array($arr)) { return false; }
+    
     $append = true;
     $appendLevel1 = true;
     foreach ( $arr as $key => $data )
