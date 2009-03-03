@@ -339,6 +339,7 @@ class PluginArray2XML
           $args [0] = $xmlDocument;
           $args [1] = $parentNode;
           $args [2] = $data;
+          $args [3] = $key;
           $append = call_user_func ( self::$key_test [$key], $args );
         }
         else
