@@ -50,7 +50,8 @@ class PluginArray2XML
 	*/
   private $doc;
   
-  private $testforxml;
+  // Changed private $this->testforxml to public static $testforxml
+  public static $testforxml;
   public static $key_test = array ();
 
   /**
@@ -95,7 +96,7 @@ class PluginArray2XML
     global $debug;
     $this->doc = new domdocument ( );
     $arr = array ();
-    $this->testforxml = $testforxml;
+    self::$testforxml = $testforxml;
     if (count ( $this->XMLArray ) > 1)
     {
       if ($rootName != "")
@@ -250,7 +251,8 @@ class PluginArray2XML
               $append = true;
             }
           }
-          elseif (stristr ( $key, "XML" ) && $this->testforxml == true)
+          //elseif (stristr ( $key, "XML" ) && $this->testforxml == true)
+          elseif (stristr ( $key, "XML" ) && self::$testforxml == true)
           {
             // $key contains 'XML' so add the $val as literal XML
             $append = self::appendXMLString ( $xmlDocument, $node, $val );
@@ -417,7 +419,7 @@ class PluginArray2XML
     {
       $append = self::appendInlineArray ( $xmlDocument, $node, $val );
     }
-    elseif (stristr ( $key, "XML" ) && $this->testforxml == true)
+    elseif (stristr ( $key, "XML" ) && self::$testforxml == true)
     {
       // $key contains 'XML' so add the $val as literal XML
       $append = self::appendXMLString ( $xmlDocument, $node, $val );
