@@ -575,7 +575,7 @@ class PluginArray2XML
   {
     $data = array ();
     // Doctrine/Propel compatibility
-    if (class_exists ( 'BasePeer' ))
+    if (class_exists ( 'BasePeer', false ))
     {
       $data = $val->toArray ( BasePeer::TYPE_FIELDNAME );
     }
