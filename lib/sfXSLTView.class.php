@@ -79,14 +79,16 @@ class sfXSLTView extends sfPHPView {
 		}
 		$this->attributeHolder->set("components",$setcomponents);
 	}
+	
 	function _get_cache($cacheManager, $uri)
 	{
 		$retval = $cacheManager->get($uri);
 
-		if (sfConfig::get('sf_web_debug'))
-		{
-			$retval = sfWebDebug::getInstance()->decorateContentWithDebug($uri, $retval, false);
-		}
+//		if (sfConfig::get('sf_web_debug'))
+//		{
+//		  
+//			$retval = sfWebDebug::getInstance()->decorateContentWithDebug($uri, $retval, false);
+//		}
 
 		return $retval;
 	}
@@ -95,10 +97,10 @@ class sfXSLTView extends sfPHPView {
 	{
 		$saved = $cacheManager->set($retval, $uri);
 		
-		if ($saved && sfConfig::get('sf_web_debug'))
-		{
-			$retval = sfWebDebug::getInstance()->decorateContentWithDebug($uri, $retval, true);
-		}
+//		if ($saved && sfConfig::get('sf_web_debug'))
+//		{
+//			$retval = sfWebDebug::getInstance()->decorateContentWithDebug($uri, $retval, true);
+//		}
 
 		return $retval;
 	}
