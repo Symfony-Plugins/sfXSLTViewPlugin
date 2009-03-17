@@ -71,6 +71,11 @@ class sfXSLTView extends sfPHPView {
 		return true;
 	}
 
+	public function setAttributeHolder($val)
+	{
+	  $this->attributeHolder = $val;
+	}
+	
 	protected function buildComponents(){
 		$components = $this->componentSlots;
 		$setcomponents = array();
