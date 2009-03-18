@@ -17,6 +17,7 @@ class sfXSLTView extends sfPHPView {
 	protected $xsl = false;
 	protected $dom = false;
 	protected $buildcomp = false;
+	public $componentname='';
 	/**
      * sfXSLTView::initialize()
      * This method is used instead of sfPHPView::initialze
@@ -190,6 +191,7 @@ class sfXSLTView extends sfPHPView {
 			// render
 			$view = new sfXSLTView($context,$moduleName,$actionName,  '',false);
 			$view->attributeHolder = $componentInstance->getVarHolder();
+			$view->componentname = $componentName;
 			$retval = $view->render($componentInstance->getVarHolder()->getAll());
 			if ($cacheManager = $context->getViewCacheManager())
 			{
@@ -228,7 +230,7 @@ class sfXSLTView extends sfPHPView {
 
 		$xmlstr=$array2xml->saveArray("","XML",true);
 		$GLOBALS['XMLSTR'] = $xmlstr;
-		if($this->context->getRequest()->hasParameter("dumpXML") && $this->buildcomp==true){
+		if($this->context->getRequest()->hasParameter("dumpXML") && ($this->buildcomp==true || $this->context->getRequest()->getParameter("dumpXML")==$this->componentname)){
 			header('Content-type: text/xml');
 			echo $xmlstr;
 			flush();
