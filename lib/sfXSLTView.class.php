@@ -81,7 +81,7 @@ class sfXSLTView extends sfPHPView {
 		$components = $this->componentSlots;
 		$setcomponents = array();
 		foreach($components as $name => $component){
-			$setcomponents[$name]=$this->get_component($component["module_name"],$component["component_name"]);
+			$setcomponents[$name]=$this->get_component($component["module_name"],$component["component_name"], array(), $name);
 		}
 		$this->attributeHolder->set("components",$setcomponents);
 	}
@@ -111,7 +111,7 @@ class sfXSLTView extends sfPHPView {
 		return $retval;
 	}
 	
-	function get_component($moduleName, $componentName, $vars = array())
+	function get_component($moduleName, $componentName, $vars = array(), $name)
 	{
 
 		$context = $this->context;
@@ -191,7 +191,7 @@ class sfXSLTView extends sfPHPView {
 			// render
 			$view = new sfXSLTView($context,$moduleName,$actionName,  '',false);
 			$view->attributeHolder = $componentInstance->getVarHolder();
-			$view->componentname = $componentName;
+			$view->componentname = $name;
 			$retval = $view->render($componentInstance->getVarHolder()->getAll());
 			if ($cacheManager = $context->getViewCacheManager())
 			{
