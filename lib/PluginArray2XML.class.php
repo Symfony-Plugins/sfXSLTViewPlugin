@@ -295,9 +295,9 @@ class PluginArray2XML
           {
             $append = self::appendPropelPager ( $xmlDocument, $node, $val );
           }
-          elseif ($val instanceof Doctrine_Pager)
-          {
-            $append = self::appendDoctrinePager ( $xmlDocument, $node, $val );
+          elseif ($val instanceof sfDoctrinePager) // WAS Doctrine_Pager
+          {//echo "USING PAGER";die();
+            $append = self::appendsfDoctrinePager ( $xmlDocument, $node, $val );
           }
           elseif ($val instanceof sfForm)
           {
@@ -469,9 +469,9 @@ class PluginArray2XML
     {
       $append = self::appendPropelPager ( $xmlDocument, $node, $val );
     }
-    elseif ($val instanceof Doctrine_Pager)
+    elseif ($val instanceof sfDoctrinePager)
     {
-      $append = self::appendDoctrinePager ( $xmlDocument, $node, $val );
+      $append = self::appendsfDoctrinePager ( $xmlDocument, $node, $val );
     }
     elseif ($val instanceof sfForm)
     {
@@ -677,17 +677,44 @@ class PluginArray2XML
   }
 
   /**
-   * Convert a Doctrine_Pager object to XML
+   * Convert an sfDoctrinePager object to XML
    *
    * @param DOMDocument $xmldocument
    * @param DomNode $node
-   * @param Doctrine_Pager $val
+   * @param sfDoctrinePager $val
    * @return boolean
    */
-  public static function appendDoctrinePager($xmldocument, $node, $val, $key = null)
+  public static function appendsfDoctrinePager($xmldocument, $node,sfDoctrinePager $val, $key = null)
   {
     $data = array ();
+    $data ['results'] = $val->getResults();
     
+    //$data = $val->getResults();
+    if ($val->haveToPaginate ())
+    {
+      //$data["pagelinks"] = $val->getLinks();
+      $data ["pages"] = array ();
+      $data ["pages"] ['ResultCount'] = $val->getNbResults ();
+      $data ["pages"] ['FirstPage'] = $val->getFirstPage ();
+      $data ["pages"] ['PreviousPage'] = $val->getPreviousPage ();
+      $data ["pages"] ['NextPage'] = $val->getNextPage ();
+      $data ["pages"] ['LastPage'] = $val->getLastPage ();
+      $data ["pages"] ['CurrentPage'] = $val->getPage ();
+      //$data["pages"]['CurrentMaxLink'] = $val->getCurrentMaxLink();
+      $data ["pages"] ['MaxPerPage'] = $val->getMaxPerPage ();
+    }
+    $data ["total"] = $val->getNbResults ();
+    if ($data) // TODO: Not sure this test makes sense? $data["total"] should be set, forcing 'true'
+    {
+      //wtUtil::dump($data);
+      //$this->addArray($data, $node, $key);
+      self::appendArray ( $xmldocument, $node, $data, $key );
+      //$append=true;
+      return true;
+    }
+    return false;
+    
+    /*
     // If the pager has not been executed, it will throw Doctrine_Pager_Exception
     if (! $val->getExecuted ())
     {
@@ -718,6 +745,7 @@ class PluginArray2XML
       return true;
     }
     return false;
+    */
   }
 
   public static function appendUser($xmlDocument, $node, $val, $key)
