@@ -296,7 +296,7 @@ class PluginArray2XML
             $append = self::appendPropelPager ( $xmlDocument, $node, $val );
           }
           elseif ($val instanceof sfDoctrinePager) // WAS Doctrine_Pager
-          {//echo "USING PAGER";die();
+          {
             $append = self::appendsfDoctrinePager ( $xmlDocument, $node, $val );
           }
           elseif ($val instanceof sfForm)
@@ -529,7 +529,8 @@ class PluginArray2XML
     $nodeText = $xmldocument->createCDATASection ( $val );
     $node->setAttribute ( "timeinwords", $timeinwords );
     $node->setAttribute ( "ts", $ts );
-    $node->setAttribute ( "d", date ( "d", $ts ) );
+    $node->setAttribute ( "d", date ( "d", $ts ) ); // 2 digit date with leading zero
+    $node->setAttribute ( "j", date ( "j", $ts ) ); // 2 digit date without leading zero
     $node->setAttribute ( "D", date ( "D", $ts ) );
     $node->setAttribute ( "l", date ( "l", $ts ) );
     $node->setAttribute ( "S", date ( "S", $ts ) );
@@ -701,6 +702,7 @@ class PluginArray2XML
       $data ["pages"] ['LastPage'] = $val->getLastPage ();
       $data ["pages"] ['CurrentPage'] = $val->getPage ();
       //$data["pages"]['CurrentMaxLink'] = $val->getCurrentMaxLink();
+      $data ["pages"] ['MaxRecordLimit'] = $val->getMaxRecordLimit();
       $data ["pages"] ['MaxPerPage'] = $val->getMaxPerPage ();
     }
     $data ["total"] = $val->getNbResults ();
