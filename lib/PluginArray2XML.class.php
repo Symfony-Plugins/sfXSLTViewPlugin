@@ -582,7 +582,7 @@ class PluginArray2XML
     }
     else
     {
-      $data = $val->toArray ();
+      $data = $val->toArray (true);
     }
     /*
        * If the user has decided to set up loading of foreign tables automatically
