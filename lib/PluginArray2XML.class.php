@@ -271,12 +271,13 @@ class PluginArray2XML
             }
             else
             {
-              $append = self::appendCData ( $xmlDocument, $node, $val );
+           	  
+              $append = sfArray2XML::appendCData ( $xmlDocument, $node, $val );
             }
           }
           elseif (is_bool ( $val ))
           {
-            $append = self::appendCData ( $xmlDocument, $node, intval ( $val ) );
+            $append = sfArray2XML::appendCData ( $xmlDocument, $node, intval ( $val ) );
           }
           
           elseif (true === method_exists ( $val, "toDom" ))
@@ -302,7 +303,7 @@ class PluginArray2XML
           elseif ($val instanceof sfForm)
           {
             // Convert the form to the string representation
-            $append = self::appendCData ( $xmlDocument, $node, ( string ) $val );
+            $append = sfArray2XML::appendCData ( $xmlDocument, $node, ( string ) $val );
           }
           else
           {
@@ -436,12 +437,12 @@ class PluginArray2XML
       }
       else
       {
-        $append = self::appendCData ( $xmlDocument, $node, $val );
+        $append = sfArray2XML::appendCData ( $xmlDocument, $node, $val );
       }
     }
     elseif (is_bool ( $val ))
     {
-      $append = self::appendCData ( $xmlDocument, $node, intval ( $val ) );
+      $append = sfArray2XML::appendCData ( $xmlDocument, $node, intval ( $val ) );
     }
     elseif (true === method_exists ( $val, "toDom" ))
     {
@@ -476,7 +477,7 @@ class PluginArray2XML
     elseif ($val instanceof sfForm)
     {
       // Convert the form to the string representation
-      $append = self::appendCData ( $xmlDocument, $node, ( string ) $val );
+      $append = sfArray2XML::appendCData ( $xmlDocument, $node, ( string ) $val );
     }
     
     return $append;
